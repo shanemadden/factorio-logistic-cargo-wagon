@@ -1,0 +1,12 @@
+{
+    "name": "logistic-cargo-wagon",
+    "version": "0.16.0",
+    "title": "Logistic Cargo Wagon",
+    "author": "Shane Madden",
+    "homepage": "https://github.com/shanemadden/factorio-logistic-cargo-wagon",
+    "factorio_version": "0.16",
+    "dependencies": [
+        "base >= 0.16.51"
+    ],
+    "description": "Cargo wagons which can directly request and provide items for the logistic network"
+}
