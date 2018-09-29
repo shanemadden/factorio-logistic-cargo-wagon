@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.16.1
+Date: 29. 9. 2018
+  Info:
+    - When providing multiple items at a station, evenly rotate among the items configured when populating the trash slots instead of scanning the wagon's inventory sequentially
+---------------------------------------------------------------------------------------------------
 Version: 0.16.0
 Date: 28. 9. 2018
   Info:

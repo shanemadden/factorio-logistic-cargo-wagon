@@ -104,7 +104,7 @@ local function sync_proxy_inventory(proxy, carriage)
       local carriage_contents = carriage_cargo_inv.get_contents()
       local main_inv_contents = proxy_main_inv.get_contents()
       -- set the requests according to what's in requests minus what's in the inventory, stopping the request completely if there's any in the proxy's inventory still
-      if station_config.requests then
+      if station_config.requests and next(station_config.requests) then
         for i = 1, proxy.request_slot_count do
           local request = station_config.requests[i]
           if request then
@@ -121,17 +121,24 @@ local function sync_proxy_inventory(proxy, carriage)
       end
 
       -- find any empty slots to put trash in
-      if station_config.provides then
-        local slot_cursor = 1
+      if station_config.provides and next(station_config.provides) then
+        local provides = util.table.deepcopy(station_config.provides)
+        local provide_cursor
+        local provide
         for i = 1, #proxy_trash_inv do
           if not proxy_trash_inv[i].valid_for_read then
-            -- scan inv for anything in the list to add (using the same incrementer so we don't check slots twice)
-            while slot_cursor <= #carriage_cargo_inv do
-              local carriage_stack = carriage_cargo_inv[slot_cursor]
-              slot_cursor = slot_cursor + 1
-              if carriage_stack.valid_for_read and station_config.provides[carriage_stack.name] then
-                proxy_trash_inv[i].transfer_stack(carriage_stack)
-                break
+            -- scan inv for anything in the list to add
+            while next(provides) do
+              provide_cursor, provide = next(provides, provide_cursor)
+              if provide then
+                local carriage_stack = carriage_cargo_inv.find_item_stack(provide_cursor)
+                if carriage_stack then
+                  -- transfer and break
+                  proxy_trash_inv[i].transfer_stack(carriage_stack)
+                  break
+                else
+                  provides[provide_cursor] = nil
+                end
               end
             end
           end
