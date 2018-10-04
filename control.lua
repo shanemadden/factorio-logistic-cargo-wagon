@@ -3,10 +3,6 @@ require('util')
 -- add option for placeholder fish, removing proxies on leave to prevent chasing robots
 -- trash everything ui button - provide *
 
--- work on the paste-in-to-new-entities stuff in scaling, test
-
--- potentially handle station rename - move settings if the last station with that name is renamed, maybe?
-
 -- make sure there's a proxy player in the wagon
 local function ensure_proxy(entity)
   if not global.wagons[entity.unit_number] then
@@ -331,10 +327,8 @@ local function on_train_changed_state(event)
           end
         end
 
-        if manual_modes[train.state] then
-          -- todo wrap a setting around doing this always instead of just when going into manual mode to prevent chasing bots
-          ensure_no_proxy(carriage)
-        end
+        -- todo wrap a setting around doing this always instead of just when going into manual mode to prevent chasing bots
+        ensure_no_proxy(carriage)
       end
     end
   end

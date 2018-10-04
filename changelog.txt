@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.16.2
+Date: 3. 10. 2018
+  Info:
+    - Remove proxy entities when trains leave stations, to prevent the wagons being extra-attractive to biters and robots chasing with deliveries, at the expense of extra entity create/delete
+---------------------------------------------------------------------------------------------------
 Version: 0.16.1
 Date: 29. 9. 2018
   Info:
