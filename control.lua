@@ -79,9 +79,22 @@ local function sync_proxy_inventory(proxy, carriage)
       -- we're parked at a station, the right driver is in the carriage, we're good to proceed
       local carriage_cargo_inv = carriage.get_inventory(defines.inventory.cargo_wagon)
       local proxy_main_inv = proxy.get_inventory(defines.inventory.player_main)
+      local proxy_quickbar_inv = proxy.get_inventory(defines.inventory.player_quickbar)
       local proxy_trash_inv = proxy.get_inventory(defines.inventory.player_trash)
 
       global.active_wagons[carriage.unit_number] = proxy
+
+      -- scan the quickbar for anything to transfer to the main inventory
+      if not proxy_quickbar_inv.is_empty() then
+        for i = 1, #proxy_quickbar_inv do
+          local stack = proxy_quickbar_inv[i]
+          if stack.valid_for_read then
+            if safe_transfer(proxy_quickbar_inv, stack, proxy_main_inv) then
+              break
+            end
+          end
+        end
+      end
 
       -- scan the main inventory for anything to transfer to the train
       if not proxy_main_inv.is_empty() then
