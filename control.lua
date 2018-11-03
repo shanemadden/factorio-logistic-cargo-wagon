@@ -311,15 +311,26 @@ local function on_train_changed_state(event)
 
             -- move main to cargo or else spill
             if not proxy_main_inv.is_empty() then
+              local spilled = false
               for i = 1, #proxy_main_inv do
                 local inv_stack = proxy_main_inv[i]
                 if inv_stack.valid_for_read then
                   safe_transfer(proxy_main_inv, inv_stack, carriage_cargo_inv)
                   if inv_stack.valid_for_read then
+                    spilled = true
                     proxy.surface.spill_item_stack(proxy.position, inv_stack, nil, proxy.force)
                     inv_stack.clear()
                   end
                 end
+              end
+              if spilled then
+                proxy.surface.create_entity({
+                  name = "flying-text",
+                  text = {"logistic-cargo-wagon.spilled-items"},
+                  position = proxy.position,
+                  color = {r = 1, g = 1, b = 1, a = 0.8},
+                  force = proxy.force,
+                })
               end
               carriage_cargo_inv.sort_and_merge()
             end
@@ -590,7 +601,13 @@ local function logistic_cargo_config_request_change(event)
           if config.stations[station].requests and config.stations[station].requests[i] then
             count = config.stations[station].requests[i].count
           else
-            count = max_capacity
+            if i == 1 then
+              -- default is 40 stacks for the first slot
+              count = max_capacity
+            else
+              -- default is 1 stack for other slots
+              count = game.item_prototypes[choose_elem.elem_value].stack_size
+            end
           end
         end
         if count then

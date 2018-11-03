@@ -1,4 +1,10 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.16.4
+Date: 2. 11. 2018
+  Info:
+    - Default to 1 stack for request slots other than the first
+    - Display a flying text notification when items are spilled
+---------------------------------------------------------------------------------------------------
 Version: 0.16.3
 Date: 18. 10. 2018
   Bugfixes:
