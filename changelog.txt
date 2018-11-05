@@ -1,4 +1,11 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.16.5
+Date: 4. 11. 2018
+  Info:
+    - Integration with LTN - LTN-managed deliveries using logistic wagons will automatically request the items at the pickup station and drop them at the destination station
+    - Stop using coins as an unload placeholder, instead keeping a stack of each item being delivered to allow for hybrid unloading
+    - No longer bump mode on the train to refresh inactivity triggers - new placeholders handle this without side-effects
+---------------------------------------------------------------------------------------------------
 Version: 0.16.4
 Date: 2. 11. 2018
   Info:

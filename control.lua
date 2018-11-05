@@ -69,14 +69,11 @@ end
 
 -- check this active proxy for anything to transfer to or from the wagon's inventory
 local function sync_proxy_inventory(proxy, carriage)
-  -- track whether anything changes for switching the train mode to "bump" inactivity conditions in a train's schedule
-  local refresh = false
-
   local config = global.wagons[carriage.unit_number]
   if carriage.train.station and carriage.train.station.backer_name then
-    local station_config = config.stations[carriage.train.station.backer_name]
-    if station_config and proxy and proxy.valid and proxy.unit_number == carriage.get_driver().unit_number then
+    if proxy and proxy.valid and proxy.unit_number == carriage.get_driver().unit_number then
       -- we're parked at a station, the right driver is in the carriage, we're good to proceed
+      local station_config = config.stations and config.stations[carriage.train.station.backer_name]
       local carriage_cargo_inv = carriage.get_inventory(defines.inventory.cargo_wagon)
       local proxy_main_inv = proxy.get_inventory(defines.inventory.player_main)
       local proxy_quickbar_inv = proxy.get_inventory(defines.inventory.player_quickbar)
@@ -84,14 +81,60 @@ local function sync_proxy_inventory(proxy, carriage)
 
       global.active_wagons[carriage.unit_number] = proxy
 
+      -- sync then remove placeholder stacks, if any are present
+      if not config.placeholders then
+        config.placeholders = {}
+      end
+      -- add or remove from the mapped stack, then delete the placeholder and the config.placeholders entry
+      for placeholder_item, placeholder_info in pairs(config.placeholders) do
+        local cargo_count = placeholder_info.cargo_stack.valid_for_read and placeholder_info.cargo_stack.count or 0
+        if cargo_count ~= placeholder_info.count then
+          -- count changed by some amount, update the trash slot if possible
+          local diff = cargo_count - placeholder_info.count
+          if placeholder_info.trash_stack.valid_for_read then
+            -- still here, try to apply diff within limits
+            if diff + placeholder_info.trash_stack.count <= 0 then
+              -- clear
+              placeholder_info.trash_stack.clear()
+            elseif diff + placeholder_info.trash_stack.count > placeholder_info.trash_stack.prototype.stack_size then
+              -- too big, new slot in cargo wagon
+              for i = 1, #carriage_cargo_inv do
+                if not carriage_cargo_inv[i].valid_for_read then
+                  carriage_cargo_inv[i].set_stack(placeholder_info.trash_stack)
+                  carriage_cargo_inv[i].count = diff
+                  break
+                end
+              end
+            else
+              -- within bounds, just directly set
+              placeholder_info.trash_stack.count = diff + placeholder_info.trash_stack.count
+            end
+          else
+            -- stack's gone - if diff num is positive make a new one
+            if diff > 0 then
+              for i = 1, #carriage_cargo_inv do
+                if not carriage_cargo_inv[i].valid_for_read then
+                  carriage_cargo_inv[i].set_stack(placeholder_info.cargo_stack)
+                  carriage_cargo_inv[i].count = diff
+                  break
+                end
+              end
+            end
+          end
+        end
+
+        if placeholder_info.cargo_stack.valid_for_read then
+          placeholder_info.cargo_stack.clear()
+        end
+        config.placeholders[placeholder_item] = nil
+      end
+
       -- scan the quickbar for anything to transfer to the main inventory
       if not proxy_quickbar_inv.is_empty() then
         for i = 1, #proxy_quickbar_inv do
           local stack = proxy_quickbar_inv[i]
           if stack.valid_for_read then
-            if safe_transfer(proxy_quickbar_inv, stack, proxy_main_inv) then
-              break
-            end
+            safe_transfer(proxy_quickbar_inv, stack, proxy_main_inv)
           end
         end
       end
@@ -101,9 +144,7 @@ local function sync_proxy_inventory(proxy, carriage)
         for i = 1, #proxy_main_inv do
           local stack = proxy_main_inv[i]
           if stack.valid_for_read then
-            if safe_transfer(proxy_main_inv, stack, carriage_cargo_inv) then
-              break
-            end
+            safe_transfer(proxy_main_inv, stack, carriage_cargo_inv)
           end
         end
         carriage_cargo_inv.sort_and_merge()
@@ -113,7 +154,7 @@ local function sync_proxy_inventory(proxy, carriage)
       local carriage_contents = carriage_cargo_inv.get_contents()
       local main_inv_contents = proxy_main_inv.get_contents()
       -- set the requests according to what's in requests minus what's in the inventory, stopping the request completely if there's any in the proxy's inventory still
-      if station_config.requests and next(station_config.requests) then
+      if station_config and station_config.requests and next(station_config.requests) then
         for i = 1, proxy.request_slot_count do
           local request = station_config.requests[i]
           if request then
@@ -127,10 +168,65 @@ local function sync_proxy_inventory(proxy, carriage)
             proxy.clear_request_slot(i)
           end
         end
+      elseif global.ltn_deliveries and global.ltn_deliveries[carriage.train.id] then
+        -- check if this is the pickup station - if so, set appropriate requests
+        if carriage.train.station.backer_name == global.ltn_deliveries[carriage.train.id].from then
+          -- determine how to handle the remainder after dividing the request among wagons
+          local wagon_count = 0
+          local wagon_position
+          for _, check_wagon in ipairs(carriage.train.cargo_wagons) do
+            if check_wagon.name == "logistic-cargo-wagon" then
+              wagon_count = wagon_count + 1
+              if check_wagon == carriage then
+                wagon_position = wagon_count
+              end
+            end
+          end
+
+          if wagon_position then
+            local shipment = global.ltn_deliveries[carriage.train.id].shipment
+            local item_key, count
+            local done = false
+            for i = 1, proxy.request_slot_count do
+              if not done then
+                item_key, count = next(shipment, item_key)
+                -- adjust count relative to number of wagons
+                if count then
+                  local base = math.floor(count / wagon_count)
+                  local remainder = count - (base * wagon_count)
+                  if remainder >= wagon_position then
+                    count = base + 1
+                  else
+                    count = base
+                  end
+
+                  if item_key then
+                    local item_name = string.gsub(item_key, "^item,", "")
+                    count = count - (carriage_contents[item_name] or 0)
+                    if count > 0 and carriage_cargo_inv.can_insert({ name = item_name, count = 1 }) and not main_inv_contents[item_name] then
+                      proxy.set_request_slot({ name = item_name, count = count }, i)
+                    else
+                      proxy.clear_request_slot(i)
+                    end
+                  else
+                    done = true
+                    proxy.clear_request_slot(i)
+                  end
+                else
+                  done = true
+                  proxy.clear_request_slot(i)
+                end
+              else
+                proxy.clear_request_slot(i)
+              end
+              --game.print(serpent.block(proxy.get_request_slot(i)))
+            end
+          end
+        end
       end
 
       -- find any empty slots to put trash in
-      if station_config.provides and next(station_config.provides) then
+      if station_config and  station_config.provides and next(station_config.provides) then
         local provides = util.table.deepcopy(station_config.provides)
         local provide_cursor
         local provide
@@ -148,68 +244,76 @@ local function sync_proxy_inventory(proxy, carriage)
                 else
                   provides[provide_cursor] = nil
                 end
+              else
+                break
+              end
+            end
+          end
+        end
+      elseif global.ltn_deliveries and global.ltn_deliveries[carriage.train.id] then
+        -- check if this is the dropoff station - if so, set appropriate provides
+        if carriage.train.station.backer_name == global.ltn_deliveries[carriage.train.id].to then
+          local shipment = util.table.deepcopy(global.ltn_deliveries[carriage.train.id].shipment)
+          local shipment_cursor
+          for i = 1, #proxy_trash_inv do
+            if not proxy_trash_inv[i].valid_for_read then
+              while next(shipment) do
+                shipment_cursor = next(shipment, shipment_cursor)
+                if shipment_cursor then
+                  local item_name = string.gsub(shipment_cursor, "^item,", "")
+                  local carriage_stack = carriage_cargo_inv.find_item_stack(item_name)
+                  if carriage_stack then
+                    proxy_trash_inv[i].transfer_stack(carriage_stack)
+                    break
+                  else
+                    shipment[shipment_cursor] = nil
+                  end
+                else
+                  break
+                end
               end
             end
           end
         end
       end
 
-      -- count up the total stuff in the cargo, see if it's changed from last time to trigger a refresh of the train's mode
-      -- (all in the service of getting the inactivity condition to obey the bots)
-      local carriage_cargo_count = 0
+      
+      proxy_trash_inv.sort_and_merge()
       local carriage_contents = carriage_cargo_inv.get_contents()
-      for _, count in pairs(carriage_cargo_inv.get_contents()) do
-        carriage_cargo_count = carriage_cargo_count + count
-      end
-      -- remove the placeholder fish if there is one
-      -- (this is in the service of getting the empty condition to not trigger when the last of the wagon is in the proxy's trash)
-      if carriage_contents["coin"] then
-        carriage_cargo_count = carriage_cargo_count - carriage_cargo_inv.remove({ name = "coin", count = 1 })
-      end
-
-      if config.carriage_cargo_count ~= carriage_cargo_count then
-        config.carriage_cargo_count = carriage_cargo_count
-        refresh = true
-      end
-
-      -- same deal for trash
-      local trash_inv_count = 0
-      for _, count in pairs(proxy_trash_inv.get_contents()) do
-        trash_inv_count = trash_inv_count + count
-      end
-      if config.trash_inv_count ~= trash_inv_count then
-        config.trash_inv_count = trash_inv_count
-        refresh = true
-      end
-
-      if carriage_cargo_count == 0 and trash_inv_count > 0 then
-        -- insert placeholder since it's not present but there's trash and no carriage cargo
-        carriage_cargo_inv.insert({ name = "coin", count = 1 })
+      for trash_item, count in pairs(proxy_trash_inv.get_contents()) do
+        if not carriage_contents[trash_item] then
+          -- make a placeholder for this item (find a stack in the trash, copy it, store mapping)
+          local trash_stack = proxy_trash_inv.find_item_stack(trash_item)
+          if trash_stack then
+            -- make a copy in the carriage inventory, store the mapping
+            for i = 1, #carriage_cargo_inv do
+              if not carriage_cargo_inv[i].valid_for_read then
+                carriage_cargo_inv[i].set_stack(trash_stack)
+                config.placeholders[trash_item] = {
+                  count = trash_stack.count,
+                  cargo_stack = carriage_cargo_inv[i],
+                  trash_stack = trash_stack,
+                }
+                break
+              end
+            end
+          end
+        end
       end
     end
   end
-  return refresh
 end
 
 -- fires every 15 ticks while a train with active wagons is parked at a station
 local function check_active_proxies(event)
   -- iterate in reverse so we can delete any that have issues
-  local refresh_trains = {}
   for i = #global.active_proxies, 1, -1 do
     local proxy = global.active_proxies[i]
     if proxy.valid and proxy.vehicle and proxy.vehicle.valid then
-      -- get a return value on if any changes were made, mark the train
-      local refresh = sync_proxy_inventory(proxy, proxy.vehicle)
-      if refresh then
-        refresh_trains[proxy.vehicle.train] = true
-      end
+      sync_proxy_inventory(proxy, proxy.vehicle)
     else
       table.remove(global.active_proxies, i)
     end
-  end
-  -- touch each train that had a refresh
-  for train in pairs(refresh_trains) do
-    train.manual_mode = false
   end
   -- unregister if none left
   if not next(global.active_proxies) then
@@ -266,7 +370,7 @@ local function on_train_changed_state(event)
         if not config.proxy then
           ensure_proxy(carriage)
         end
-        if config and config.stations and config.stations[station] and not global.active_wagons[carriage.unit_number] then
+        if not global.active_wagons[carriage.unit_number] then
           table.insert(global.active_proxies, config.proxy)
           sync_proxy_inventory(config.proxy, carriage)
         end
@@ -291,9 +395,6 @@ local function on_train_changed_state(event)
 
             -- one last inventory sync
             sync_proxy_inventory(proxy, proxy.vehicle)
-
-            -- remove the placeholder if the sync just put one there
-            carriage_cargo_inv.remove({ name = "coin", count = 1 })
 
             -- clear trash into carriage or else proxy main inventory
             if not proxy_trash_inv.is_empty() then
@@ -374,6 +475,9 @@ local function on_entity_settings_pasted(event)
 end
 script.on_event(defines.events.on_entity_settings_pasted, on_entity_settings_pasted)
 
+local function on_ltn_dispatcher_updated(event)
+  global.ltn_deliveries = event.data.Deliveries
+end
 
 -- GUI time!
 -- populate the dropdown to select stations
@@ -765,12 +869,18 @@ local function on_init()
   global.wagons = {}
   global.active_proxies = {}
   global.active_wagons = {}
+  if remote.interfaces["logistic-train-network"] then
+    script.on_event(remote.call("logistic-train-network", "get_on_dispatcher_updated_event"), on_ltn_dispatcher_updated)
+  end
 end
 script.on_init(on_init)
 
 local function on_load()
   if next(global.active_proxies) then
     script.on_nth_tick(15, check_active_proxies)
+  end
+  if remote.interfaces["logistic-train-network"] then
+    script.on_event(remote.call("logistic-train-network", "get_on_dispatcher_updated_event"), on_ltn_dispatcher_updated)
   end
 end
 script.on_load(on_load)
