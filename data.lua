@@ -1,7 +1,7 @@
 local util = require('util')
 
 local item = {
-  type = "item",
+  type = "item-with-entity-data",
   name = "logistic-cargo-wagon",
   icon = "__logistic-cargo-wagon__/graphics/icons/logistic-cargo-wagon.png",
   icon_size = 32,
