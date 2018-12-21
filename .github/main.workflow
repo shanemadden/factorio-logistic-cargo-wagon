@@ -5,6 +5,5 @@ workflow "Publish mod to portal" {
 
 action "shanemadden/factorio-mod-portal-publish@master" {
   uses = "shanemadden/factorio-mod-portal-publish@master"
-  args = "logistic-cargo-wagon"
   secrets = ["FACTORIO_USER", "FACTORIO_PASSWORD"]
 }
