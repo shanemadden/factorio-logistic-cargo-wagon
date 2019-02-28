@@ -76,7 +76,6 @@ local function sync_proxy_inventory(proxy, carriage)
       local station_config = config.stations and config.stations[carriage.train.station.backer_name]
       local carriage_cargo_inv = carriage.get_inventory(defines.inventory.cargo_wagon)
       local proxy_main_inv = proxy.get_inventory(defines.inventory.player_main)
-      local proxy_quickbar_inv = proxy.get_inventory(defines.inventory.player_quickbar)
       local proxy_trash_inv = proxy.get_inventory(defines.inventory.player_trash)
 
       global.active_wagons[carriage.unit_number] = proxy
@@ -127,16 +126,6 @@ local function sync_proxy_inventory(proxy, carriage)
           placeholder_info.cargo_stack.clear()
         end
         config.placeholders[placeholder_item] = nil
-      end
-
-      -- scan the quickbar for anything to transfer to the main inventory
-      if not proxy_quickbar_inv.is_empty() then
-        for i = 1, #proxy_quickbar_inv do
-          local stack = proxy_quickbar_inv[i]
-          if stack.valid_for_read then
-            safe_transfer(proxy_quickbar_inv, stack, proxy_main_inv)
-          end
-        end
       end
 
       -- scan the main inventory for anything to transfer to the train
