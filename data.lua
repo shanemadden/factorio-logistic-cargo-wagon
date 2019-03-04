@@ -51,6 +51,19 @@ local technology = {
   order = "c-k-d-z"
 }
 
+if mods.robotworld then
+  technology.unit = {
+    count = 200,
+    ingredients =
+    {
+      {"automation-science-pack", 1},
+      {"logistic-science-pack", 1},
+      {"chemical-science-pack", 1},
+    },
+    time = 30
+  }
+end
+
 local wagon = util.table.deepcopy(data.raw["cargo-wagon"]["cargo-wagon"])
 wagon.name = "logistic-cargo-wagon"
 wagon.color = {r = 0.47, g = 0.16, b = 0.58, a = 0.9}
