@@ -465,7 +465,7 @@ end
 script.on_event(defines.events.on_entity_settings_pasted, on_entity_settings_pasted)
 
 local function on_ltn_dispatcher_updated(event)
-  global.ltn_deliveries = event.data.Deliveries
+  global.ltn_deliveries = event.deliveries
 end
 
 -- GUI time!
