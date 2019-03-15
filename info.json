@@ -1,13 +1,13 @@
 {
     "name": "logistic-cargo-wagon",
-    "version": "0.17.2",
+    "version": "0.17.3",
     "title": "Logistic Cargo Wagon",
     "author": "Shane Madden",
     "homepage": "https://github.com/shanemadden/factorio-logistic-cargo-wagon",
     "factorio_version": "0.17",
     "dependencies": [
         "base >= 0.17",
-        "? LogisticTrainNetwork >= 1.10.2",
+        "? LogisticTrainNetwork >= 1.10.3",
         "? robotworld"
     ],
     "description": "Cargo wagons which can directly request items from, and provide items to, the logistic network. Configure items to request and provide at each station for each logistic cargo wagon, allowing flexibility in unloading on curves, changing train length easily without building infrastructure, and further boost unloading speed through robot speed research."

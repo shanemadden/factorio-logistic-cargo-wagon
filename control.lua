@@ -859,7 +859,7 @@ local function on_init()
   global.active_proxies = {}
   global.active_wagons = {}
   if remote.interfaces["logistic-train-network"] then
-    script.on_event(remote.call("logistic-train-network", "get_on_dispatcher_updated_event"), on_ltn_dispatcher_updated)
+    script.on_event(remote.call("logistic-train-network", "on_dispatcher_updated"), on_ltn_dispatcher_updated)
   end
 end
 script.on_init(on_init)
@@ -869,7 +869,7 @@ local function on_load()
     script.on_nth_tick(15, check_active_proxies)
   end
   if remote.interfaces["logistic-train-network"] then
-    script.on_event(remote.call("logistic-train-network", "get_on_dispatcher_updated_event"), on_ltn_dispatcher_updated)
+    script.on_event(remote.call("logistic-train-network", "on_dispatcher_updated"), on_ltn_dispatcher_updated)
   end
 end
 script.on_load(on_load)
