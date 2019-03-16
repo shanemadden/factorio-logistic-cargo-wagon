@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.17.4
+Date: 16. 03. 2019
+  Changes:
+    - Prevent request count editing UI text fields from immediately resetting when the count is 0
+---------------------------------------------------------------------------------------------------
 Version: 0.17.3
 Date: 15. 03. 2019
   Changes:

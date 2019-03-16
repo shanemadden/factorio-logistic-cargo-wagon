@@ -659,7 +659,7 @@ local function logistic_cargo_config_request_change(event)
   local config_flow = player.gui.left.logistic_cargo_config.logistic_cargo_config_flow
   local dropdown = config_flow.logistic_cargo_config_station_dropdown
   local station = dropdown.items[dropdown.selected_index]
-  if event.element.type == "textfield" and event.element.text == "" then
+  if event.element.type == "textfield" and (event.element.text == "" or tonumber(event.element.text) == 0) then
     return
   end
   if not config.stations then
