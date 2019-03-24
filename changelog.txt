@@ -1,4 +1,9 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.17.5
+Date: 24. 03. 2019
+  Changes:
+    - Make tech even easier with Robot World present and using their early research when available
+---------------------------------------------------------------------------------------------------
 Version: 0.17.4
 Date: 16. 03. 2019
   Changes:

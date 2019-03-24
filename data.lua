@@ -51,19 +51,6 @@ local technology = {
   order = "c-k-d-z"
 }
 
-if mods.robotworld then
-  technology.unit = {
-    count = 200,
-    ingredients =
-    {
-      {"automation-science-pack", 1},
-      {"logistic-science-pack", 1},
-      {"chemical-science-pack", 1},
-    },
-    time = 30
-  }
-end
-
 local wagon = util.table.deepcopy(data.raw["cargo-wagon"]["cargo-wagon"])
 wagon.name = "logistic-cargo-wagon"
 wagon.color = {r = 0.47, g = 0.16, b = 0.58, a = 0.9}
@@ -74,4 +61,21 @@ local player = util.table.deepcopy(data.raw["player"]["player"])
 player.name = "logistic-cargo-wagon-proxy-player"
 player.collision_mask = {"ghost-layer"}
 
-data:extend({ item, recipe, technology, wagon, player })
+if mods.robotworld then
+  technology.unit = {
+    count = 100,
+    ingredients =
+    {
+      {"automation-science-pack", 1},
+      {"logistic-science-pack", 1},
+    },
+    time = 30
+  }
+  if data.raw.technology["early-character-logistic-slots"] and data.raw.technology["early-character-logistic-trash-slots"] then
+    -- robot world's early tech is active, use those as our prereqs
+    technology.prerequisites = { "railway", "early-character-logistic-slots", "early-character-logistic-trash-slots" }
+  else
+    technology.prerequisites = { "railway", "character-logistic-slots-1", "character-logistic-trash-slots-1" }
+  end
+end
+data:extend({ item, recipe, wagon, player, technology })
