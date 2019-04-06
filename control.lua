@@ -146,7 +146,7 @@ local function sync_proxy_inventory(proxy, carriage)
       if station_config and station_config.requests and next(station_config.requests) then
         for i = 1, proxy.request_slot_count do
           local request = station_config.requests[i]
-          if request then
+          if request and game.item_prototypes[request.name] then
             local count = request.count - (carriage_contents[request.name] or 0)
             if count > 0 and carriage_cargo_inv.can_insert({ name = request.name, count = 1 }) and not main_inv_contents[request.name] then
               proxy.set_request_slot({ name = request.name, count = count }, i)
@@ -208,7 +208,6 @@ local function sync_proxy_inventory(proxy, carriage)
               else
                 proxy.clear_request_slot(i)
               end
-              --game.print(serpent.block(proxy.get_request_slot(i)))
             end
           end
         end
@@ -224,7 +223,7 @@ local function sync_proxy_inventory(proxy, carriage)
             -- scan inv for anything in the list to add
             while next(provides) do
               provide_cursor, provide = next(provides, provide_cursor)
-              if provide then
+              if provide and game.item_prototypes[provide_cursor.name] then
                 local carriage_stack = carriage_cargo_inv.find_item_stack(provide_cursor)
                 if carriage_stack then
                   -- transfer and break
@@ -519,14 +518,14 @@ local function update_gui_item_selections(player, config_flow)
           next_cursor = false
         end
       end
-      if provide then
+      if provide and game.item_prototypes[next_cursor] then
         provide_button.elem_value = next_cursor
       else
         provide_button.elem_value = nil
       end
 
       local request = requests[i]
-      if request then
+      if request and game.item_prototypes[request.name] then
         request_button.elem_value = request.name
         request_textbox.text = request.count
       else
