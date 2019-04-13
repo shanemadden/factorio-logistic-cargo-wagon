@@ -223,7 +223,7 @@ local function sync_proxy_inventory(proxy, carriage)
             -- scan inv for anything in the list to add
             while next(provides) do
               provide_cursor, provide = next(provides, provide_cursor)
-              if provide and game.item_prototypes[provide_cursor.name] then
+              if provide and game.item_prototypes[provide_cursor] then
                 local carriage_stack = carriage_cargo_inv.find_item_stack(provide_cursor)
                 if carriage_stack then
                   -- transfer and break
