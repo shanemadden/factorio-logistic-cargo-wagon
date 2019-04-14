@@ -192,7 +192,7 @@ local function sync_proxy_inventory(proxy, carriage)
                   if item_key then
                     local item_name = string.gsub(item_key, "^item,", "")
                     count = count - (carriage_contents[item_name] or 0)
-                    if count > 0 and carriage_cargo_inv.can_insert({ name = item_name, count = 1 }) and not main_inv_contents[item_name] then
+                    if count > 0 and game.item_prototypes[item_name] and carriage_cargo_inv.can_insert({ name = item_name, count = 1 }) and not main_inv_contents[item_name] then
                       proxy.set_request_slot({ name = item_name, count = count }, i)
                     else
                       proxy.clear_request_slot(i)
