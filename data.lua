@@ -57,9 +57,9 @@ wagon.color = {r = 0.47, g = 0.16, b = 0.58, a = 0.9}
 wagon.icon = "__logistic-cargo-wagon__/graphics/icons/logistic-cargo-wagon.png"
 wagon.minable.result = "logistic-cargo-wagon"
 
-local player = util.table.deepcopy(data.raw["player"]["player"])
-player.name = "logistic-cargo-wagon-proxy-player"
-player.collision_mask = {"ghost-layer"}
+local character = util.table.deepcopy(data.raw["character"]["character"])
+character.name = "logistic-cargo-wagon-proxy-player"
+character.collision_mask = {"ghost-layer"}
 
 if mods.robotworld then
   technology.unit = {
@@ -78,4 +78,4 @@ if mods.robotworld then
     technology.prerequisites = { "railway", "character-logistic-slots-1", "character-logistic-trash-slots-1" }
   end
 end
-data:extend({ item, recipe, wagon, player, technology })
+data:extend({ item, recipe, wagon, character, technology })

@@ -75,8 +75,8 @@ local function sync_proxy_inventory(proxy, carriage)
       -- we're parked at a station, the right driver is in the carriage, we're good to proceed
       local station_config = config.stations and config.stations[carriage.train.station.backer_name]
       local carriage_cargo_inv = carriage.get_inventory(defines.inventory.cargo_wagon)
-      local proxy_main_inv = proxy.get_inventory(defines.inventory.player_main)
-      local proxy_trash_inv = proxy.get_inventory(defines.inventory.player_trash)
+      local proxy_main_inv = proxy.get_inventory(defines.inventory.character_main)
+      local proxy_trash_inv = proxy.get_inventory(defines.inventory.character_trash)
 
       global.active_wagons[carriage.unit_number] = proxy
 
@@ -378,8 +378,8 @@ local function on_train_changed_state(event)
             -- everything's in place so this seems to be a normal mode change, safe to do one final inventory sync
             local proxy = config.proxy
             local carriage_cargo_inv = carriage.get_inventory(defines.inventory.cargo_wagon)
-            local proxy_main_inv = proxy.get_inventory(defines.inventory.player_main)
-            local proxy_trash_inv = proxy.get_inventory(defines.inventory.player_trash)
+            local proxy_main_inv = proxy.get_inventory(defines.inventory.character_main)
+            local proxy_trash_inv = proxy.get_inventory(defines.inventory.character_trash)
 
             -- one last inventory sync
             sync_proxy_inventory(proxy, proxy.vehicle)
