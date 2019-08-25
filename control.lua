@@ -552,7 +552,7 @@ end
 local function on_gui_opened(event)
   if event.entity and event.entity.name == "logistic-cargo-wagon" then
     local player = game.players[event.player_index]
-    if player.permission_group.allows_action(defines.input_action.set_logistic_filter_item) then
+    if player.permission_group and player.permission_group.allows_action(defines.input_action.set_logistic_filter_item) then
       if player.gui.left.logistic_cargo_config then
         player.gui.left.logistic_cargo_config.destroy()
       end
