@@ -55,6 +55,7 @@ local wagon = util.table.deepcopy(data.raw["cargo-wagon"]["cargo-wagon"])
 wagon.name = "logistic-cargo-wagon"
 wagon.color = {r = 0.47, g = 0.16, b = 0.58, a = 0.9}
 wagon.icon = "__logistic-cargo-wagon__/graphics/icons/logistic-cargo-wagon.png"
+wagon.icon_size = 32
 wagon.minable.result = "logistic-cargo-wagon"
 
 local character = util.table.deepcopy(data.raw["character"]["character"])
