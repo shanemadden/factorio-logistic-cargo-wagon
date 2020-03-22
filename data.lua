@@ -35,7 +35,7 @@ local technology = {
       recipe = "logistic-cargo-wagon"
     }
   },
-  prerequisites = { "character-logistic-slots-2", "character-logistic-trash-slots-2", "logistic-system", "automated-rail-transportation" },
+  prerequisites = { "logistic-system", "automated-rail-transportation" },
   unit = {
     count = 500,
     ingredients =
