@@ -527,7 +527,7 @@ local function update_gui_item_selections(player, config_flow)
       local request = requests[i]
       if request and game.item_prototypes[request.name] then
         request_button.elem_value = request.name
-        request_textbox.text = request.count
+        request_textbox.text = tostring(request.count)
       else
         request_button.elem_value = nil
         request_textbox.text = ""
