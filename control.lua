@@ -144,7 +144,7 @@ local function sync_proxy_inventory(proxy, carriage)
       local main_inv_contents = proxy_main_inv.get_contents()
       -- set the requests according to what's in requests minus what's in the inventory, stopping the request completely if there's any in the proxy's inventory still
       if station_config and station_config.requests and next(station_config.requests) then
-        for i = 1, proxy.request_slot_count do
+        for i = 1, #station_config.requests do
           local request = station_config.requests[i]
           if request and game.item_prototypes[request.name] then
             local count = request.count - (carriage_contents[request.name] or 0)
@@ -425,8 +425,8 @@ local function on_train_changed_state(event)
             end
 
             -- clear all requests
-            for i = 1, proxy.request_slot_count do
-              proxy.clear_request_slot(i)
+            while proxy.request_slot_count > 0 do
+              proxy.clear_request_slot(1)
             end
 
             for i = #global.active_proxies, 1, -1 do
